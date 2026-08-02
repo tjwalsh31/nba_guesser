@@ -17,8 +17,8 @@ class Player:
         self.age = d["Age"]
 
     def __str__(self):
-        return f"Name: {self.name}, Position: {self.position}, Height: {self.height}, Jersey: {self.jersey}, Team: {self.team}"
+        return f"Name: {self.name}, Position: {self.position}, Height: {self.height}, Jersey: {self.jersey}, Team: {self.team}, Age: {self.age}"
 
-
+    
 player = Player()
 print(player)

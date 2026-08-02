@@ -10,6 +10,7 @@ def get_info():
     player = random.choice(players.get_active_players())
     player_info = commonplayerinfo.CommonPlayerInfo(player_id=player["id"])
     df= player_info.get_data_frames()[0]
+    
     d["Name"] = df.loc[0, "DISPLAY_FIRST_LAST"]
     d["Position"] = df.loc[0, "POSITION"]
     d["Height"] = df.loc[0, "HEIGHT"]
