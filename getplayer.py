@@ -108,6 +108,14 @@ class Team:
     """Represents a team with metadata from the NBA API or static team list."""
 
     def __init__(self, team_id):
+        if team_id is None:
+            self.name = "Unknown"
+            self.conference = None
+            self.division = None
+            self.id = None
+            self.abbreviation = "UNK"
+            return
+
         try:
             df = teaminfocommon.TeamInfoCommon(team_id=team_id).get_data_frames()[0]
             df = df.iloc[0]
@@ -116,7 +124,7 @@ class Team:
             self.division = df.loc["TEAM_DIVISION"]
             self.id = df.loc["TEAM_ID"]
             self.abbreviation = df.loc["TEAM_ABBREVIATION"]
-        except (RequestException, IndexError, KeyError):
+        except (RequestException, ValueError, IndexError, KeyError):
             static_team = next(
                 (team for team in static_teams.get_teams() if team.get("id") == team_id),
                 None,
@@ -129,8 +137,8 @@ class Team:
                 self.abbreviation = "UNK"
             else:
                 self.name = static_team["full_name"]
-                self.conference = static_team.get("conference")
-                self.division = static_team.get("division")
+                self.conference = None
+                self.division = None
                 self.id = static_team["id"]
                 self.abbreviation = static_team["abbreviation"]
 
@@ -220,19 +228,22 @@ class Player:  # pylint: disable=too-many-instance-attributes
 
 def compare_position(p1, p2):
     """Compare two players by position and return relative feedback."""
-    positions = [
-        "Guard",
-        "Guard-Forward",
-        "Forward-Guard",
-        "Forward",
-        "Forward-Center",
-        "Center-Forward",
-        "Center",
-    ]
-    diff = positions.index(p1.position) - positions.index(p2.position)
-    if diff == 0:
+    position_roles = {
+        "Guard": {"Guard"},
+        "Forward": {"Forward"},
+        "Center": {"Center"},
+        "Guard-Forward": {"Guard", "Forward"},
+        "Forward-Guard": {"Guard", "Forward"},
+        "Forward-Center": {"Forward", "Center"},
+        "Center-Forward": {"Forward", "Center"},
+    }
+
+    roles1 = position_roles.get(p1.position, {p1.position})
+    roles2 = position_roles.get(p2.position, {p2.position})
+
+    if roles1 == roles2:
         return "position ="
-    if diff in (1, -1):
+    if roles1 & roles2:
         return "position close"
     return "wrong position"
 
@@ -269,6 +280,7 @@ def compare_jersey(p1, p2):
     """Compare two players by jersey number and return relative feedback."""
     j1 = int(p1.jersey)
     j2 = int(p2.jersey)
+    # handling jersey number 00
     if p1.jersey == "00":
         j1 = -1
     if p2.jersey == "00":
@@ -277,16 +289,16 @@ def compare_jersey(p1, p2):
     diff = j1 - j2
     if diff == 0:
         return "jersey ="
-    if 0 < diff < 4:
+    if 0 < diff < 3:
         return "jersey +"
-    if -4 < diff < 0:
+    if -3 < diff < 0:
         return "jersey -"
     if diff > 3:
         return "jersey ++"
     return "jersey --"
 
 
-def compare_teams(p1, p2):
+def compare_past_teams(p1, p2):
     """Compare two players by current team and past team history."""
     t1 = p1.current_team.abbreviation
     if t1 == p2.current_team.abbreviation:
@@ -294,6 +306,24 @@ def compare_teams(p1, p2):
     if t1 in p2.all_teams:
         return "player has played for this team"
     return "teams different"
+
+def compare_conference(p1, p2):
+    """Compare two players by their team's conference."""
+    c1 = p1.current_team.conference
+    c2 = p2.current_team.conference
+    if c1 == c2:
+        return "conference ="
+    return "conference different"
+
+def compare_division(p1, p2):
+    """Compare two players by their team's division."""
+    d1 = p1.current_team.division
+    d2 = p2.current_team.division
+    if d1 == d2:
+        return "division ="
+    return "division different"
+
+
 
 
 if __name__ == "__main__":
@@ -309,4 +339,6 @@ if __name__ == "__main__":
     print(compare_height(player_one, player_two))
     print(compare_age(player_one, player_two))
     print(compare_jersey(player_one, player_two))
-    print(compare_teams(player_one, player_two))
+    print(compare_past_teams(player_one, player_two))
+    print(compare_conference(player_one, player_two))
+    print(compare_division(player_one, player_two))
