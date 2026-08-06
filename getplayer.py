@@ -1,39 +1,46 @@
-import nba_api.stats.static.players as static_players
-import nba_api.stats.static.teams as static_teams
-import nba_api.stats.endpoints.commonplayerinfo as commonplayerinfo
-import nba_api.stats.endpoints.teaminfocommon as teaminfocommon
-import nba_api.stats.endpoints.playercareerstats as playercareerstats
+"""NBA player helper utilities for random player selection and comparison."""
+
 import random
-import pandas as pd
-from datetime import datetime, date
+from datetime import datetime
+
 import numpy as np
+import pandas as pd
+from nba_api.stats.endpoints import commonplayerinfo, playercareerstats, teaminfocommon
+from nba_api.stats.static import players as static_players
+from nba_api.stats.static import teams as static_teams
+from requests.exceptions import RequestException
+
 
 def get_random_active_player():
-    # returns a random dictionary "player"
-    # helper function to initialize a player
+    """Return a random active player dictionary."""
     players = static_players.get_active_players()
-    player = random.choice(players)
-    return player
+    return random.choice(players)
 
 
-def get_player_id(player): 
-    # returns ID of a player so we can retrieve their stats/info
-    # helper function for get_player_info
-    return player['id']
+def get_player_id(player_data):
+    """Return the NBA player ID from an active player record."""
+    return player_data["id"]
 
 
-def get_player_info(player):
-    # takes a player dictionary and returns a pandas view of their information
-    # helper function to get a player's information
-    p_id = get_player_id(player)
+def get_player_info(player_data):
+    """Return a pandas Series containing information for the given player."""
+    p_id = get_player_id(player_data)
 
     try:
-        player_info = commonplayerinfo.CommonPlayerInfo(player_id=p_id).common_player_info.get_data_frame().iloc[0]
-
-    except Exception:
+        player_info = (
+            commonplayerinfo.CommonPlayerInfo(player_id=p_id)
+            .common_player_info
+            .get_data_frame()
+            .iloc[0]
+        )
+    except (RequestException, ValueError, IndexError, KeyError):
         fallback_data = {
             "PERSON_ID": p_id,
-            "DISPLAY_FIRST_LAST": player.get("full_name") or player.get("name") or "Unknown Player",
+            "DISPLAY_FIRST_LAST": (
+                player_data.get("full_name")
+                or player_data.get("name")
+                or "Unknown Player"
+            ),
             "BIRTHDATE": None,
             "POSITION": None,
             "HEIGHT": None,
@@ -41,22 +48,20 @@ def get_player_info(player):
             "TEAM_ABBREVIATION": None,
             "JERSEY": None,
         }
-
         player_info = pd.Series(fallback_data)
 
     return player_info
 
 
 def initialize_player():
-    # initialize a random player.
-    player = get_random_active_player()
-    player_info = get_player_info(player)
-    return player_info
-    
+    """Initialize a random active player and return their info series."""
+    player_data = get_random_active_player()
+    return get_player_info(player_data)
 
-def get_age(player):
-    # takes a birthdate string and a datetime object and returns the age as an integer
-    bday = player.loc['BIRTHDATE']
+
+def get_age(player_info):
+    """Calculate the age of a player based on their birthdate."""
+    bday = player_info.loc["BIRTHDATE"]
     today = datetime.now()
     bday_str = str(bday).strip()
 
@@ -67,7 +72,6 @@ def get_age(player):
     today_date = today.date() if isinstance(today, datetime) else today
 
     age = today_date.year - birth_date.year
-
     if (today_date.month, today_date.day) < (birth_date.month, birth_date.day):
         age -= 1
 
@@ -75,7 +79,7 @@ def get_age(player):
 
 
 def get_height_in_inches(height):
-    # convert a height string like "6-10" into total inches for easy comparison
+    """Convert a height string like "6-10" into total inches."""
     if not height:
         return None
 
@@ -91,7 +95,7 @@ def get_height_in_inches(height):
 
 
 def format_height_in_feet_inches(total_inches):
-    # convert total inches back to a display string like "6-10"
+    """Format total inches into a feet-inches display string."""
     if total_inches is None:
         return None
 
@@ -99,47 +103,42 @@ def format_height_in_feet_inches(total_inches):
     inches = total_inches % 12
     return f"{feet}-{inches}"
 
-# TEAM CLASS
-class Team:
 
-    def __init__(self, id):
-        # because we will only initialize a team object when we are setting up a player,
-        # we will initialize the team with the provided ID
+class Team:
+    """Represents a team with metadata from the NBA API or static team list."""
+
+    def __init__(self, team_id):
         try:
-            # attempt to get team info from api, id comes from player.set_info() 
-            # then generate team object
-            df = teaminfocommon.TeamInfoCommon(team_id=id).get_data_frames()
-            df = df[0]
+            df = teaminfocommon.TeamInfoCommon(team_id=team_id).get_data_frames()[0]
             df = df.iloc[0]
-            self.name = df.loc['TEAM_NAME']
-            self.conference = df.loc['TEAM_CONFERENCE']
-            self.division = df.loc['TEAM_DIVISION']
-            self.id = df.loc['TEAM_ID']
-            self.abbreviation = df.loc['TEAM_ABBREVIATION']
-        except Exception:
-            # exception if a player is not currently rostered on a team. 
-            # if a player is not rostered on a team i plan to just get another player. work around for now
+            self.name = df.loc["TEAM_NAME"]
+            self.conference = df.loc["TEAM_CONFERENCE"]
+            self.division = df.loc["TEAM_DIVISION"]
+            self.id = df.loc["TEAM_ID"]
+            self.abbreviation = df.loc["TEAM_ABBREVIATION"]
+        except (RequestException, IndexError, KeyError):
             static_team = next(
-                (team for team in static_teams.get_teams() if team.get('id') == id),
+                (team for team in static_teams.get_teams() if team.get("id") == team_id),
                 None,
             )
             if static_team is None:
                 self.name = "Unknown"
                 self.conference = None
                 self.division = None
-                self.id = id
+                self.id = team_id
                 self.abbreviation = "UNK"
             else:
-                self.name = static_team['full_name']
-                self.conference = static_team.get('conference')
-                self.division = static_team.get('division')
-                self.id = static_team['id']
-                self.abbreviation = static_team['abbreviation']
+                self.name = static_team["full_name"]
+                self.conference = static_team.get("conference")
+                self.division = static_team.get("division")
+                self.id = static_team["id"]
+                self.abbreviation = static_team["abbreviation"]
 
-# PLAYER CLASS
-class Player:
+
+class Player:  # pylint: disable=too-many-instance-attributes
+    """Represents an NBA player and their current metadata."""
+
     def __init__(self):
-        # initialize empty player
         self.name = None
         self.age = None
         self.position = None
@@ -151,21 +150,27 @@ class Player:
         self.debug = False
 
     def __str__(self):
-        return f"Player: {self.name}, Age: {self.age}, Position: {self.position}, Height: {format_height_in_feet_inches(self.height)}, Team: {self.current_team.abbreviation}, Jersey: {self.jersey}"
+        return (
+            f"Player: {self.name}, Age: {self.age}, Position: {self.position}, "
+            f"Height: {format_height_in_feet_inches(self.height)}, "
+            f"Team: {self.current_team.abbreviation}, Jersey: {self.jersey}"
+        )
 
     def print(self):
+        """Print the player representation."""
         print(self)
 
     def toggle_debug(self):
+        """Toggle debug mode on the player."""
         self.debug = not self.debug
         print(f"Debug mode is now {self.debug}")
 
-
     def set_all_teams(self):
-        # get all teams for the player
-        player_career_stats = playercareerstats.PlayerCareerStats(player_id=self.id).get_data_frames()[0]
-
-        past_teams = player_career_stats['TEAM_ABBREVIATION'].unique()
+        """Populate all teams the player has played for."""
+        player_career_stats = (
+            playercareerstats.PlayerCareerStats(player_id=self.id).get_data_frames()[0]
+        )
+        past_teams = player_career_stats["TEAM_ABBREVIATION"].unique()
 
         if self.current_team.abbreviation not in past_teams:
             past_teams = np.append(past_teams, self.current_team.abbreviation)
@@ -176,98 +181,94 @@ class Player:
 
         self.all_teams = past_teams
         return past_teams
-        
 
     def set_player_by_name(self, name):
-        player = static_players.find_players_by_full_name(name)
-        if len(player) == 1:
-            player = player[0]
-            player = get_player_info(player)
-            self.set_info(player)
-        elif len(player) > 1:
+        """Load player info by full name."""
+        matched_players = static_players.find_players_by_full_name(name)
+        if len(matched_players) == 1:
+            player_info = get_player_info(matched_players[0])
+            self.set_info(player_info)
+        elif len(matched_players) > 1:
             print("Multiple players found with that name.")
         else:
             print("Player not found.")
 
-
-    def set_info(self, player):
-        # set player info, takes player dictionary and updates player object
-        # we will initialize team with team object that is passed a team ID
+    def set_info(self, player_info):
+        """Update the player object from player information."""
         if self.debug:
             print()
-        
-        self.id = player.loc['PERSON_ID']
-        self.name = player.loc['DISPLAY_FIRST_LAST']
-        self.age = get_age(player)
-        self.position = player.loc['POSITION']
-        self.height = get_height_in_inches(player.loc['HEIGHT'])
-        self.current_team = Team(player.loc['TEAM_ID'])
-        self.jersey = player.loc['JERSEY']
+
+        self.id = player_info.loc["PERSON_ID"]
+        self.name = player_info.loc["DISPLAY_FIRST_LAST"]
+        self.age = get_age(player_info)
+        self.position = player_info.loc["POSITION"]
+        self.height = get_height_in_inches(player_info.loc["HEIGHT"])
+        self.current_team = Team(player_info.loc["TEAM_ID"])
+        self.jersey = player_info.loc["JERSEY"]
         self.all_teams = self.set_all_teams()
 
-        if len(self.current_team.name) == 0: # if team name is not set, get a new player
+        if len(self.current_team.name) == 0:
             self.set_random_player()
-        if len(self.jersey) == 0: # if no jersey number, get a new player
+        if len(self.jersey) == 0:
             self.set_random_player()
 
     def set_random_player(self):
-        player = initialize_player()
-        self.set_info(player)
+        """Load a random active player into this Player object."""
+        player_info = initialize_player()
+        self.set_info(player_info)
 
 
-
-# comparison functions
 def compare_position(p1, p2):
-    # compare positions of two players, return string describing difference
-    # we will find the index of player position and use difference to find distance
-    positions = ["Guard", "Guard-Forward", "Forward-Guard", "Forward", "Forward-Center", "Center-Forward", "Center"]
-    pos1 = positions.index(p1.position)
-    pos2 = positions.index(p2.position)
-    diff = pos1 - pos2
+    """Compare two players by position and return relative feedback."""
+    positions = [
+        "Guard",
+        "Guard-Forward",
+        "Forward-Guard",
+        "Forward",
+        "Forward-Center",
+        "Center-Forward",
+        "Center",
+    ]
+    diff = positions.index(p1.position) - positions.index(p2.position)
     if diff == 0:
         return "position ="
-    elif diff == 1 or diff == -1:
+    if diff in (1, -1):
         return "position close"
-    else:
-        return "wrong position"
+    return "wrong position"
+
 
 def compare_height(p1, p2):
-    h1 = p1.height
-    h2 = p2.height
-
-    diff = h1 - h2
+    """Compare two players by height and return relative feedback."""
+    diff = p1.height - p2.height
     if diff == 0:
         return "height ="
-    elif diff > 0 and diff < 3:
+    if 0 < diff < 3:
         return "height +"
-    elif diff < 0 and diff > -3:
+    if -3 < diff < 0:
         return "height -"
-    elif diff > 3:
+    if diff > 3:
         return "height ++"
-    else:
-        return "height --"
+    return "height --"
+
 
 def compare_age(p1, p2):
-    a1 = p1.age
-    a2 = p2.age
-
-    diff = a1 - a2
+    """Compare two players by age and return relative feedback."""
+    diff = p1.age - p2.age
     if diff == 0:
         return "age ="
-    elif diff > 0 and diff < 3:
+    if 0 < diff < 3:
         return "age +"
-    elif diff < 0 and diff > -3:
+    if -3 < diff < 0:
         return "age -"
-    elif diff > 3:
+    if diff > 3:
         return "age ++"
-    else:
-        return "age --"
+    return "age --"
+
 
 def compare_jersey(p1, p2):
+    """Compare two players by jersey number and return relative feedback."""
     j1 = int(p1.jersey)
     j2 = int(p2.jersey)
-
-    # edge case for a player's jersey is "00"
     if p1.jersey == "00":
         j1 = -1
     if p2.jersey == "00":
@@ -276,39 +277,36 @@ def compare_jersey(p1, p2):
     diff = j1 - j2
     if diff == 0:
         return "jersey ="
-    elif diff > 0 and diff < 4:
+    if 0 < diff < 4:
         return "jersey +"
-    elif diff < 0 and diff > -4:
+    if -4 < diff < 0:
         return "jersey -"
-    elif diff > 3:
+    if diff > 3:
         return "jersey ++"
-    else:
-        return "jersey --"
+    return "jersey --"
+
 
 def compare_teams(p1, p2):
+    """Compare two players by current team and past team history."""
     t1 = p1.current_team.abbreviation
-    t2 = p2.current_team.abbreviation
-    t2_list = p2.all_teams
-
-    if t1 == t2:
+    if t1 == p2.current_team.abbreviation:
         return "teams ="
-    elif t1 in t2_list:
+    if t1 in p2.all_teams:
         return "player has played for this team"
-    else:
-        return "teams different"
+    return "teams different"
 
 
 if __name__ == "__main__":
-    player = Player()
-    player.set_random_player()
-    player.print()
+    player_one = Player()
+    player_one.set_random_player()
+    player_one.print()
 
-    player2 = Player()
-    player2.set_random_player()
-    player2.print()
+    player_two = Player()
+    player_two.set_random_player()
+    player_two.print()
 
-    print(compare_position(player, player2))
-    print(compare_height(player, player2))
-    print(compare_age(player, player2))
-    print(compare_jersey(player, player2))
-    print(compare_teams(player, player2))
+    print(compare_position(player_one, player_two))
+    print(compare_height(player_one, player_two))
+    print(compare_age(player_one, player_two))
+    print(compare_jersey(player_one, player_two))
+    print(compare_teams(player_one, player_two))
