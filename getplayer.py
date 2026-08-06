@@ -2,7 +2,6 @@
 
 import random
 from datetime import datetime
-
 import numpy as np
 import pandas as pd
 from nba_api.stats.endpoints import commonplayerinfo, playercareerstats, teaminfocommon
