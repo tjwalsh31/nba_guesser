@@ -154,7 +154,10 @@ class Player:  # pylint: disable=too-many-instance-attributes
         self.jersey = None
         self.id = None
         self.all_teams = None
+        self.target = False
         self.debug = False
+        self.set_random_player()
+
 
     def __str__(self):
         return (
@@ -163,14 +166,17 @@ class Player:  # pylint: disable=too-many-instance-attributes
             f"Team: {self.current_team.abbreviation}, Jersey: {self.jersey}"
         )
 
+
     def print(self):
         """Print the player representation."""
         print(self)
+
 
     def toggle_debug(self):
         """Toggle debug mode on the player."""
         self.debug = not self.debug
         print(f"Debug mode is now {self.debug}")
+
 
     def set_all_teams(self):
         """Populate all teams the player has played for."""
@@ -189,6 +195,7 @@ class Player:  # pylint: disable=too-many-instance-attributes
         self.all_teams = past_teams
         return past_teams
 
+
     def set_player_by_name(self, name):
         """Load player info by full name."""
         matched_players = static_players.find_players_by_full_name(name)
@@ -200,7 +207,8 @@ class Player:  # pylint: disable=too-many-instance-attributes
         else:
             print("Player not found.")
 
-    def set_info(self, player_info):
+
+    def set_info(self, player_info, target):
         """Update the player object from player information."""
         if self.debug:
             print()
@@ -212,14 +220,22 @@ class Player:  # pylint: disable=too-many-instance-attributes
         self.height = get_height_in_inches(player_info.loc["HEIGHT"])
         self.current_team = Team(player_info.loc["TEAM_ID"])
         self.jersey = player_info.loc["JERSEY"]
-        self.all_teams = self.set_all_teams()
+        if target:
+            self.all_teams = self.set_all_teams()
 
         if len(self.current_team.name) == 0:
             self.set_random_player()
         if len(self.jersey) == 0:
             self.set_random_player()
 
+
     def set_random_player(self):
         """Load a random active player into this Player object."""
         player_info = initialize_player()
-        self.set_info(player_info)
+        self.set_info(player_info, self.target)
+
+
+    def set_target(self):
+        self.target = True
+        self.set_all_teams()
+

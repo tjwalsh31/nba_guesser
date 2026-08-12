@@ -71,13 +71,14 @@ def compare_jersey(p1, p2):
         return "jersey ++"
     return "jersey --"
 
-
 def compare_past_teams(p1, p2):
     """Compare two players by current team and past team history."""
-    t1 = p1.current_team.abbreviation
-    if t1 == p2.current_team.abbreviation:
+    if not p1.target:
+        p1.set_target()
+    t2 = p2.current_team.abbreviation
+    if t2 == p1.current_team.abbreviation:
         return "teams ="
-    if t1 in p2.all_teams:
+    if t2 in p1.all_teams:
         return "player has played for this team"
     return "teams different"
 
@@ -97,18 +98,22 @@ def compare_division(p1, p2):
         return "division ="
     return "division different"
 
-# player_one = Player()
-# player_one.set_random_player()
-# player_one.print()
+def compare_player(p1, p2):
+    if p1.name == p2.name:
+        return "same player"
+    return "different player"
 
-# player_two = Player()
-# player_two.set_random_player()
-# player_two.print()
 
-# print(compare_position(player_one, player_two))
-# print(compare_height(player_one, player_two))
-# print(compare_age(player_one, player_two))
-# print(compare_jersey(player_one, player_two))
-# print(compare_past_teams(player_one, player_two))
-# print(compare_conference(player_one, player_two))
-# print(compare_division(player_one, player_two))
+player_one = Player()
+player_one.print()
+
+player_two = Player()
+player_two.print()
+
+print(compare_position(player_one, player_two))
+print(compare_height(player_one, player_two))
+print(compare_age(player_one, player_two))
+print(compare_jersey(player_one, player_two))
+print(compare_past_teams(player_one, player_two))
+print(compare_conference(player_one, player_two))
+print(compare_division(player_one, player_two))

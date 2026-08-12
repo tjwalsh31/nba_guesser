@@ -1,4 +1,5 @@
 from getplayer import *
+from compare_players import *
 
 
 def main():
