@@ -99,7 +99,7 @@ def compare_division(p1, p2):
     return "division different"
 
 def compare_player(p1, p2):
-    if p1.name == p2.name:
+    if p1.id == p2.id:
         return "same player"
     return "different player"
 

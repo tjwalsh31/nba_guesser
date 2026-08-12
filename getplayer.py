@@ -102,6 +102,16 @@ def format_height_in_feet_inches(total_inches):
     inches = total_inches % 12
     return f"{feet}-{inches}"
 
+def get_active_players_by_full_name(name):
+    """Return a list of active players matching the given full name."""
+    active_players = static_players.get_active_players()
+    matched_players = []
+    for player in active_players:
+        if name.lower() in player["full_name"].lower():
+            matched_players.append(player)
+    return matched_players
+
+
 
 class Team:
     """Represents a team with metadata from the NBA API or static team list."""
@@ -198,17 +208,39 @@ class Player:  # pylint: disable=too-many-instance-attributes
 
     def set_player_by_name(self, name):
         """Load player info by full name."""
-        matched_players = static_players.find_players_by_full_name(name)
+        matched_players = get_active_players_by_full_name(name)
         if len(matched_players) == 1:
             player_info = get_player_info(matched_players[0])
+            print(player_info)
             self.set_info(player_info)
+
         elif len(matched_players) > 1:
             print("Multiple players found with that name.")
+            idx = 0
+
+            for player in matched_players:
+                print(f"{idx}:  ", player["full_name"])
+                idx += 1
+            found = False
+            while(not found):
+                try:
+                    choice = int(input("Enter number of player you want to select: "))
+                    if 0 <= choice < len(matched_players):
+                        player_info = get_player_info(matched_players[choice])
+                        self.set_info(player_info)
+                        found = True
+                        break
+                    else:
+                        print("Invalid choice. Please enter a valid number.")
+                except ValueError:
+                    print("Invalid input. Please enter a number.")
+
+        
         else:
             print("Player not found.")
 
 
-    def set_info(self, player_info, target):
+    def set_info(self, player_info):
         """Update the player object from player information."""
         if self.debug:
             print()
@@ -220,7 +252,7 @@ class Player:  # pylint: disable=too-many-instance-attributes
         self.height = get_height_in_inches(player_info.loc["HEIGHT"])
         self.current_team = Team(player_info.loc["TEAM_ID"])
         self.jersey = player_info.loc["JERSEY"]
-        if target:
+        if self.target:
             self.all_teams = self.set_all_teams()
 
         if len(self.current_team.name) == 0:
@@ -232,10 +264,14 @@ class Player:  # pylint: disable=too-many-instance-attributes
     def set_random_player(self):
         """Load a random active player into this Player object."""
         player_info = initialize_player()
-        self.set_info(player_info, self.target)
+        self.set_info(player_info)
 
 
     def set_target(self):
         self.target = True
         self.set_all_teams()
 
+
+p1 = Player()
+p1.set_player_by_name("Steph")
+p1.print()
