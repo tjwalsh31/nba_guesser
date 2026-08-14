@@ -166,12 +166,12 @@ class Player:  # pylint: disable=too-many-instance-attributes
         self.all_teams = None
         self.target = False
         self.debug = False
-        self.set_random_player()
+        # self.set_random_player()
 
 
     def __str__(self):
         return (
-            f"Player: {self.name}, Age: {self.age}, Position: {self.position}, "
+            f"{self.name}, Age: {self.age}, Position: {self.position}, "
             f"Height: {format_height_in_feet_inches(self.height)}, "
             f"Team: {self.current_team.abbreviation}, Jersey: {self.jersey}"
         )
@@ -211,16 +211,16 @@ class Player:  # pylint: disable=too-many-instance-attributes
         matched_players = get_active_players_by_full_name(name)
         if len(matched_players) == 1:
             player_info = get_player_info(matched_players[0])
-            print(player_info)
             self.set_info(player_info)
+            return
 
         elif len(matched_players) > 1:
-            print("Multiple players found with that name.")
+            """ Handle the case where multiple players match the given name."""
             idx = 0
-
             for player in matched_players:
                 print(f"{idx}:  ", player["full_name"])
                 idx += 1
+
             found = False
             while(not found):
                 try:
@@ -234,10 +234,8 @@ class Player:  # pylint: disable=too-many-instance-attributes
                         print("Invalid choice. Please enter a valid number.")
                 except ValueError:
                     print("Invalid input. Please enter a number.")
-
-        
         else:
-            print("Player not found.")
+            return 1
 
 
     def set_info(self, player_info):
@@ -268,10 +266,7 @@ class Player:  # pylint: disable=too-many-instance-attributes
 
 
     def set_target(self):
+        """Set this player as the target player for comparison.
+            Method will set a random player as the target."""
         self.target = True
-        self.set_all_teams()
-
-
-p1 = Player()
-p1.set_player_by_name("Steph")
-p1.print()
+        self.set_random_player()
