@@ -173,7 +173,9 @@ class Player:  # pylint: disable=too-many-instance-attributes
         return (
             f"{self.name}, Age: {self.age}, Position: {self.position}, "
             f"Height: {format_height_in_feet_inches(self.height)}, "
-            f"Team: {self.current_team.abbreviation}, Jersey: {self.jersey}"
+            f"Team: {self.current_team.abbreviation}, Division: {self.current_team.division}, "
+            f"Conference: {self.current_team.conference}, Jersey: {self.jersey} "
+
         )
 
 

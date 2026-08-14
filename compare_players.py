@@ -27,9 +27,9 @@ def compare_height(p1, p2):
     diff = p1.height - p2.height
     if diff == 0:
         return "="
-    if 0 < diff < 3:
+    if 0 < diff <= 3:
         return "+"
-    if -3 < diff < 0:
+    if -3 <= diff < 0:
         return "-"
     if diff > 3:
         return "++"
@@ -41,9 +41,9 @@ def compare_age(p1, p2):
     diff = p1.age - p2.age
     if diff == 0:
         return "="
-    if 0 < diff < 3:
+    if 0 < diff <= 3:
         return "+"
-    if -3 < diff < 0:
+    if -3 <= diff < 0:
         return "-"
     if diff > 3:
         return "++"
@@ -63,9 +63,9 @@ def compare_jersey(p1, p2):
     diff = j1 - j2
     if diff == 0:
         return "="
-    if 0 < diff < 3:
+    if 0 < diff <= 3:
         return "+"
-    if -3 < diff < 0:
+    if -3 <= diff < 0:
         return "-"
     if diff > 3:
         return "++"
