@@ -103,17 +103,3 @@ def compare_player(p1, p2):
         return "="
     return "!="
 
-
-# player_one = Player()
-# player_one.print()
-
-# player_two = Player()
-# player_two.print()
-
-# print(compare_position(player_one, player_two))
-# print(compare_height(player_one, player_two))
-# print(compare_age(player_one, player_two))
-# print(compare_jersey(player_one, player_two))
-# print(compare_past_teams(player_one, player_two))
-# print(compare_conference(player_one, player_two))
-# print(compare_division(player_one, player_two))
