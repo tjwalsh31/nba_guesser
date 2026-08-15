@@ -4,15 +4,18 @@ import random
 from datetime import datetime
 import numpy as np
 import pandas as pd
-from nba_api.stats.endpoints import commonplayerinfo, playercareerstats, teaminfocommon
-from nba_api.stats.static import players as static_players
+from nba_api.stats.endpoints import playercareerstats
 from nba_api.stats.static import teams as static_teams
 from requests.exceptions import RequestException
+
+from nba_wrapper import NBAApiClient
+
+api_client = NBAApiClient()
 
 
 def get_random_active_player():
     """Return a random active player dictionary."""
-    players = static_players.get_active_players()
+    players = api_client.get_active_players()
     return random.choice(players)
 
 
@@ -23,33 +26,7 @@ def get_player_id(player_data):
 
 def get_player_info(player_data):
     """Return a pandas Series containing information for the given player."""
-    p_id = get_player_id(player_data)
-
-    try:
-        player_info = (
-            commonplayerinfo.CommonPlayerInfo(player_id=p_id)
-            .common_player_info
-            .get_data_frame()
-            .iloc[0]
-        )
-    except (RequestException, ValueError, IndexError, KeyError):
-        fallback_data = {
-            "PERSON_ID": p_id,
-            "DISPLAY_FIRST_LAST": (
-                player_data.get("full_name")
-                or player_data.get("name")
-                or "Unknown Player"
-            ),
-            "BIRTHDATE": None,
-            "POSITION": None,
-            "HEIGHT": None,
-            "TEAM_ID": None,
-            "TEAM_ABBREVIATION": None,
-            "JERSEY": None,
-        }
-        player_info = pd.Series(fallback_data)
-
-    return player_info
+    return api_client.get_player_info(player_data)
 
 
 def initialize_player():
@@ -104,7 +81,7 @@ def format_height_in_feet_inches(total_inches):
 
 def get_active_players_by_full_name(name):
     """Return a list of active players matching the given full name."""
-    active_players = static_players.get_active_players()
+    active_players = api_client.get_active_players()
     matched_players = []
     for player in active_players:
         if name.lower() in player["full_name"].lower():
@@ -126,30 +103,18 @@ class Team:
             return
 
         try:
-            df = teaminfocommon.TeamInfoCommon(team_id=team_id).get_data_frames()[0]
-            df = df.iloc[0]
-            self.name = df.loc["TEAM_NAME"]
-            self.conference = df.loc["TEAM_CONFERENCE"]
-            self.division = df.loc["TEAM_DIVISION"]
-            self.id = df.loc["TEAM_ID"]
-            self.abbreviation = df.loc["TEAM_ABBREVIATION"]
-        except (RequestException, ValueError, IndexError, KeyError):
-            static_team = next(
-                (team for team in static_teams.get_teams() if team.get("id") == team_id),
-                None,
-            )
-            if static_team is None:
-                self.name = "Unknown"
-                self.conference = None
-                self.division = None
-                self.id = team_id
-                self.abbreviation = "UNK"
-            else:
-                self.name = static_team["full_name"]
-                self.conference = None
-                self.division = None
-                self.id = static_team["id"]
-                self.abbreviation = static_team["abbreviation"]
+            team_info = api_client.get_team_info(team_id)
+            self.name = team_info["TEAM_NAME"]
+            self.conference = team_info["TEAM_CONFERENCE"]
+            self.division = team_info["TEAM_DIVISION"]
+            self.id = team_info["TEAM_ID"]
+            self.abbreviation = team_info["TEAM_ABBREVIATION"]
+        except (ValueError, IndexError, KeyError, TypeError):
+            self.name = "Unknown"
+            self.conference = None
+            self.division = None
+            self.id = team_id
+            self.abbreviation = "UNK"
 
 
 class Player:  # pylint: disable=too-many-instance-attributes
@@ -192,9 +157,7 @@ class Player:  # pylint: disable=too-many-instance-attributes
 
     def set_all_teams(self):
         """Populate all teams the player has played for."""
-        player_career_stats = (
-            playercareerstats.PlayerCareerStats(player_id=self.id).get_data_frames()[0]
-        )
+        player_career_stats = api_client.get_career_stats(self.id)
         past_teams = player_career_stats["TEAM_ABBREVIATION"].unique()
 
         if self.current_team.abbreviation not in past_teams:
