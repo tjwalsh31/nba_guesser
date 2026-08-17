@@ -1,5 +1,115 @@
 from getplayer import Player
+from enum import Enum
+from dataclasses import dataclass
+from typing import Any,Optional
 
+class MatchStatus(Enum):
+    MATCH = "match"
+    CLOSE_MATCH = "close_match"
+    NO_MATCH = "no_match"
+
+@dataclass
+class ComparisonResult:
+    attribute: str
+    status: MatchStatus
+    delta= Optional[int] = None
+    direction: Optional[str] = None
+
+
+class PlayerComparison:
+    def __init__(self, target, guess):
+        self.target = target
+        self.guess = guess
+
+    def compare_position(self):
+        """Compare to players by position, return relative feedback"""
+        position_roles = {
+            "Guard": {"Guard"},
+            "Forward": {"Forward"},
+            "Center": {"Center"},
+            "Guard-Forward": {"Guard", "Forward"},
+            "Forward-Guard": {"Guard", "Forward"},
+            "Forward-Center": {"Forward", "Center"},
+            "Center-Forward": {"Forward", "Center"},
+        }
+
+        target_role = position_roles.get(self.target.position, {self.target.position})
+        guess_role = position_roles.get(self.guess.position, {self.guess.position})
+
+        if target_role == guess_role:
+            return ComparisonResult("position", MatchStatus.MATCH)
+        if target_role & guess_role:
+            return ComparisonResult("position", MatchStatus.CLOSE_MATCH)
+        
+        return ComparisonResult("position", MatchStatus.NO_MATCH)
+
+    def compare_age(self):
+        diff = self.target.age - self.guess.age
+        if diff == 0:
+            return ComparisonResult("age", MatchStatus.MATCH)
+        if -2 <= diff <= 2:
+            return ComparisonResult("age", MatchStatus.CLOSE_MATCH, diff)
+        return ComparisonResult("age", MatchStatus.NO_MATCH, diff)
+
+    def compare_height(self):
+        diff = self.target.height - self.guess.height
+        if diff == 0:
+            return ComparisonResult("height", MatchStatus.MATCH)
+        if -2 <= diff <= 2:
+            return ComparisonResult("height", MatchStatus.CLOSE_MATCH, diff)
+        return ComparisonResult("height", MatchStatus.NO_MATCH, diff)
+
+    def compare_jersey(self):
+        """Compare two players by jersey number and return relative feedback."""
+        j1 = int(self.target.jersey)
+        j2 = int(self.guess.jersey)
+        # handling jersey number 00
+        if self.target.jersey == "00":
+            j1 = -1
+        if self.guess.jersey == "00":
+            j2 = -1
+
+        diff = j1 - j2
+        if diff == 0:
+            return ComparisonResult("jersey", MatchStatus.MATCH)
+        if -2 <= diff <= 2:
+            return ComparisonResult("jersey", MatchStatus.CLOSE_MATCH, diff)
+        
+        return ComparisonResult("jersey", MatchStatus.NO_MATCH, diff)
+
+    def compare_teams(self):
+        t2 = self.guess.current_team.abbreviation
+        if t2 == self.target.current_team.abbreviation:
+            return ComparisonResult("team", MatchStatus.MATCH)
+        if t2 in self.target.all_teams:
+            return ComparisonResult("team", MatchStatus.CLOSE_MATCH)
+        return ComparisonResult("team", MatchStatus.NO_MATCH)
+
+    def compare_conference(self):
+        """Compare two players by their team's conference."""
+        c1 = self.target.current_team.conference
+        c2 = self.guess.current_team.conference
+        if c1 == c2:
+            return ComparisonResult("conference", MatchStatus.MATCH)
+        return ComparisonResult("conference", MatchStatus.NO_MATCH)
+
+    def compare_division(self):
+        d1 = self.target.current_team.division
+        d2 = self.guess.current_team.division
+        if d1 == d2:
+            return ComparisonResult("division", MatchStatus.MATCH)
+        return ComparisonResult("division", MatchStatus.NO_MATCH)
+
+    def compare_playet(self):
+        if self.target.id == self.guess.id:
+            return ComparisonResult("player", MatchStatus.MATCH)
+        return ComparisonResult("player", MatchStatus.NO_MATCH)
+
+
+        
+        
+
+""" Remove these at some point"""
 def compare_position(p1, p2):
     """Compare two players by position and return relative feedback."""
     position_roles = {
@@ -74,7 +184,7 @@ def compare_jersey(p1, p2):
 def compare_teams(p1, p2):
     """Compare two players by current team and past team history."""
     if not p1.target:
-        p1.set_target()
+        return "?"
     t2 = p2.current_team.abbreviation
     if t2 == p1.current_team.abbreviation:
         return "="
