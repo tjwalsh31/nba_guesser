@@ -10,6 +10,7 @@ from compare_players import (
     compare_position,
     compare_teams,
 )
+from compare_players import PlayerComparison
 from getplayer import Player
 
 
@@ -56,17 +57,38 @@ class Game:
 
     def compare_guess(self):
         """Compare the player's guess against the target player."""
-        self.comparison = {
-            "team": compare_teams(self.target, self.player),
-            "division": compare_division(self.target, self.player),
-            "conference": compare_conference(self.target, self.player),
-            "position": compare_position(self.target, self.player),
-            "height": compare_height(self.target, self.player),
-            "age": compare_age(self.target, self.player),
-            "jersey": compare_jersey(self.target, self.player),
-            "player": compare_player(self.target, self.player),
-        }
-        print(f"\n{self.comparison}\n")
+        comp = PlayerComparison(self.target, self.player)
+        self.comparison = comp.comp_for_game()
+        # self.comparison = {
+        #     "team": compare_teams(self.target, self.player),
+        #     "division": compare_division(self.target, self.player),
+        #     "conference": compare_conference(self.target, self.player),
+        #     "position": compare_position(self.target, self.player),
+        #     "height": compare_height(self.target, self.player),
+        #     "age": compare_age(self.target, self.player),
+        #     "jersey": compare_jersey(self.target, self.player),
+        #     "player": compare_player(self.target, self.player),
+        # }
+
+        self.display_comparison()
+        # print(self.comparison)
+        return self.comparison
+
+    def display_comparison(self):
+        """Display the comparison results for the current guess."""
+        print("\t", end="")
+        for key, value in self.comparison.items():
+            if key in ["age", "height", "jersey"]:
+                print(f"{key}: {value[0]}{value[1]}", end="  |  ")
+            else:
+                print(f"{key}: {value}", end ="  |  ")
+        print("\n")
+
+
+
+    def print_target(self):
+        """Print the target player's information."""
+        print(f"Target player: {self.target}")
 
     def __str__(self):
         """Return a readable summary of the current game state."""
@@ -94,14 +116,17 @@ def main():
                 game.playing = False
                 break
 
+            if guess_name.lower() == "target":
+                game.print_target()
+                continue
+
             elif game.guess(guess_name):
                 print("Enter another player...")
                 continue
 
-            elif game.comparison.get("player") == "=":
+            elif game.player.id == game.target.id:
                 print(f"You guessed the player in {game.num_guesses} guesses!")
                 game.playing = False
-
 
 
             elif game.num_guesses == 8:
