@@ -10,6 +10,7 @@ from compare_players import (
     compare_position,
     compare_teams,
 )
+from compare_players import PlayerComparison
 from getplayer import Player
 
 
@@ -66,6 +67,7 @@ class Game:
             "jersey": compare_jersey(self.target, self.player),
             "player": compare_player(self.target, self.player),
         }
+
         print(f"\n{self.comparison}\n")
 
     def __str__(self):

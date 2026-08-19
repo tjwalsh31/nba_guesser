@@ -1,7 +1,7 @@
-from getplayer import Player
 from enum import Enum
 from dataclasses import dataclass
-from typing import Any,Optional
+from typing import Optional
+from getplayer import Player
 
 class MatchStatus(Enum):
     MATCH = "match"
@@ -12,7 +12,7 @@ class MatchStatus(Enum):
 class ComparisonResult:
     attribute: str
     status: MatchStatus
-    delta= Optional[int] = None
+    delta: Optional[int] = None
     direction: Optional[str] = None
 
 
@@ -20,6 +20,14 @@ class PlayerComparison:
     def __init__(self, target, guess):
         self.target = target
         self.guess = guess
+
+    @staticmethod
+    def _get_direction(diff):
+        """Return the target's direction relative to the guess."""
+        if diff == 0:
+            return "same"
+        return "higher" if diff > 0 else "lower"
+
 
     def compare_position(self):
         """Compare to players by position, return relative feedback"""
@@ -45,37 +53,45 @@ class PlayerComparison:
 
     def compare_age(self):
         diff = self.target.age - self.guess.age
+        direction = self._get_direction(diff)
         if diff == 0:
-            return ComparisonResult("age", MatchStatus.MATCH)
+            return ComparisonResult("age", MatchStatus.MATCH, direction=direction)
         if -2 <= diff <= 2:
-            return ComparisonResult("age", MatchStatus.CLOSE_MATCH, diff)
-        return ComparisonResult("age", MatchStatus.NO_MATCH, diff)
+            return ComparisonResult(
+                "age", MatchStatus.CLOSE_MATCH, diff, direction
+            )
+        return ComparisonResult("age", MatchStatus.NO_MATCH, diff, direction)
 
     def compare_height(self):
         diff = self.target.height - self.guess.height
+        direction = self._get_direction(diff)
         if diff == 0:
-            return ComparisonResult("height", MatchStatus.MATCH)
+            return ComparisonResult("height", MatchStatus.MATCH, direction=direction)
         if -2 <= diff <= 2:
-            return ComparisonResult("height", MatchStatus.CLOSE_MATCH, diff)
-        return ComparisonResult("height", MatchStatus.NO_MATCH, diff)
+            return ComparisonResult(
+                "height", MatchStatus.CLOSE_MATCH, diff, direction
+            )
+        return ComparisonResult("height", MatchStatus.NO_MATCH, diff, direction)
 
     def compare_jersey(self):
         """Compare two players by jersey number and return relative feedback."""
         j1 = int(self.target.jersey)
         j2 = int(self.guess.jersey)
-        # handling jersey number 00
         if self.target.jersey == "00":
             j1 = -1
         if self.guess.jersey == "00":
             j2 = -1
 
         diff = j1 - j2
+        direction = self._get_direction(diff)
         if diff == 0:
-            return ComparisonResult("jersey", MatchStatus.MATCH)
+            return ComparisonResult("jersey", MatchStatus.MATCH, direction=direction)
         if -2 <= diff <= 2:
-            return ComparisonResult("jersey", MatchStatus.CLOSE_MATCH, diff)
+            return ComparisonResult(
+                "jersey", MatchStatus.CLOSE_MATCH, diff, direction
+            )
         
-        return ComparisonResult("jersey", MatchStatus.NO_MATCH, diff)
+        return ComparisonResult("jersey", MatchStatus.NO_MATCH, diff, direction)
 
     def compare_teams(self):
         t2 = self.guess.current_team.abbreviation
@@ -100,14 +116,59 @@ class PlayerComparison:
             return ComparisonResult("division", MatchStatus.MATCH)
         return ComparisonResult("division", MatchStatus.NO_MATCH)
 
-    def compare_playet(self):
+    def compare_player(self):
         if self.target.id == self.guess.id:
             return ComparisonResult("player", MatchStatus.MATCH)
         return ComparisonResult("player", MatchStatus.NO_MATCH)
 
+    def compare_all(self):
+        """Compare all attributes and return a list of results."""
+        position = self.compare_position()
+        age = self.compare_age()
+        height = self.compare_height()
+        jersey = self.compare_jersey()
+        team = self.compare_teams()
+        conference = self.compare_conference()
+        division = self.compare_division()
+        player = self.compare_player()
+        results = {
+            "position": position.status.value,
+            "age": [age.status.value, age.delta, age.direction],
+            "height": [height.status.value, height.delta, height.direction],
+            "jersey": [jersey.status.value, jersey.delta, jersey.direction],
+            "team": team.status.value,
+            "conference": conference.status.value,
+            "division": division.status.value,
+            "player": player.status.value
+        }
+        return results
+
+    def __str__(self):
+        string = []
+        results = self.compare_all()
+        for key in results:
+            string.append(f"{key}: {results[key]}")
+        return "\n".join(string)
+            
+
+
+target = Player()
+target.set_target()
+guess = Player()
+guess.set_random_player()
+
+print(target)
+print(guess)
+comp = PlayerComparison(target, guess)
+print(comp)
 
         
-        
+
+
+
+
+
+
 
 """ Remove these at some point"""
 def compare_position(p1, p2):
@@ -212,4 +273,5 @@ def compare_player(p1, p2):
     if p1.id == p2.id:
         return "="
     return "!="
+
 
