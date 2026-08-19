@@ -4,9 +4,9 @@ from typing import Optional
 from getplayer import Player
 
 class MatchStatus(Enum):
-    MATCH = "match"
-    CLOSE_MATCH = "close_match"
-    NO_MATCH = "no_match"
+    MATCH = "✓"
+    CLOSE_MATCH = "~"
+    NO_MATCH = "X"
 
 @dataclass
 class ComparisonResult:
@@ -26,7 +26,7 @@ class PlayerComparison:
         """Return the target's direction relative to the guess."""
         if diff == 0:
             return "same"
-        return "higher" if diff > 0 else "lower"
+        return "^" if diff > 0 else "v"
 
 
     def compare_position(self):
@@ -143,6 +143,22 @@ class PlayerComparison:
         }
         return results
 
+    def comp_for_game(self):
+        """Return a dictionary of comparison results formatted for the game."""
+        results = self.compare_all()
+        game_results = {
+            "team": results["team"],
+            "division": results["division"],
+            "conference": results["conference"],
+            "position": results["position"],
+            "age": [results["age"][0], results["age"][2]],
+            "height": [results["height"][0], results["height"][2]],
+            "jersey": [results["jersey"][0], results["jersey"][2]],
+            "player": results["player"]
+        }
+        return game_results
+
+
     def __str__(self):
         string = []
         results = self.compare_all()
@@ -152,15 +168,15 @@ class PlayerComparison:
             
 
 
-target = Player()
-target.set_target()
-guess = Player()
-guess.set_random_player()
+# target = Player()
+# target.set_target()
+# guess = Player()
+# guess.set_random_player()
 
-print(target)
-print(guess)
-comp = PlayerComparison(target, guess)
-print(comp)
+# print(target)
+# print(guess)
+# comp = PlayerComparison(target, guess)
+# print(comp)
 
         
 
