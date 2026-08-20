@@ -76,19 +76,5 @@ class NBAApiClient:
     def get_career_stats(self, player_id):
         return playercareerstats.PlayerCareerStats(player_id=player_id).get_data_frames()[0]
 
-    
 
-    # def initialize_player_attribute_dict(self, player_dict):
-    #     """To make initializing a player easier."""
-    #     info = self.get_player_info(player_dict)
-    #     better_dict = {
-    #         "id": int(info.loc["PERSON_ID"]),
-    #         "name": info.loc["DISPLAY_FIRST_LAST"],
-    #         "age": get_age(info),
-    #         "position": info.loc["POSITION"],
-    #         "height": info.loc["HEIGHT"],
-    #         "current_team": info.loc["TEAM_ABBREVIATION"],
-    #         "jersey": info.loc["JERSEY"],
-    #         "all_teams": None,
-    #     }
-    #     return better_dict
+    

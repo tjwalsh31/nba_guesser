@@ -52,6 +52,9 @@ class Game:
 
     def process_guess(self):
         """Process the current guess and compare it to the target player."""
+        if self.player.current_team.abbreviation in ("TOT", "UNK"):
+            print("Player has an unknown or total team. Please guess another player.")
+            return False
         print(f"\n{self.num_guesses}\t{self.player}")
         self.num_guesses += 1
         self.compare_guess()
