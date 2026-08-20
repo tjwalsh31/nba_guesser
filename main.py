@@ -30,11 +30,11 @@ class Game:
         if lookup.status != "found":
             return lookup
 
-        if self.player.name in self.guesses:
+        if self.player.id in self.guesses:
             print("Player already guessed.")
             return lookup
 
-        self.guesses.append(self.player.name)
+        self.guesses.append(self.player.id)
         self.process_guess()
         return lookup
 
@@ -42,11 +42,11 @@ class Game:
         """Load and process a candidate selected by the caller."""
         self.player = Player()
         self.player.set_player_by_data(candidate)
-        if self.player.name in self.guesses:
+        if self.player.id in self.guesses:
             print("Player already guessed.")
             return False
 
-        self.guesses.append(self.player.name)
+        self.guesses.append(self.player.id)
         self.process_guess()
         return True
 
