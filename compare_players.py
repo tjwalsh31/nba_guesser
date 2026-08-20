@@ -165,8 +165,3 @@ class PlayerComparison:
         for key in results:
             string.append(f"{key}: {results[key]}")
         return "\n".join(string)
-            
-        
-
-
-
