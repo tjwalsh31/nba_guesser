@@ -76,5 +76,3 @@ class NBAApiClient:
     def get_career_stats(self, player_id):
         return playercareerstats.PlayerCareerStats(player_id=player_id).get_data_frames()[0]
 
-
-    
