@@ -1,15 +1,5 @@
 """Main game loop for the NBA guessing game."""
 
-from compare_players import (
-    compare_age,
-    compare_conference,
-    compare_division,
-    compare_height,
-    compare_jersey,
-    compare_player,
-    compare_position,
-    compare_teams,
-)
 from compare_players import PlayerComparison
 from getplayer import Player
 
