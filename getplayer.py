@@ -2,6 +2,7 @@
 
 import random
 from datetime import datetime
+from dataclasses import dataclass
 import numpy as np
 
 from nba_wrapper import NBAApiClient
@@ -83,6 +84,14 @@ def get_active_players_by_full_name(name):
         if name.lower() in player["full_name"].lower():
             matched_players.append(player)
     return matched_players
+
+
+@dataclass(frozen=True)
+class PlayerLookupResult:
+    """Result of looking up a player without requiring a specific UI."""
+
+    status: str
+    candidates: tuple = ()
 
 
 
@@ -168,35 +177,21 @@ class Player:  # pylint: disable=too-many-instance-attributes
 
 
     def set_player_by_name(self, name):
-        """Load player info by full name."""
+        """Look up a player and load it when the name is unambiguous."""
         matched_players = get_active_players_by_full_name(name)
-        if len(matched_players) == 1:
-            player_info = get_player_info(matched_players[0])
-            self.set_info(player_info)
-            return
+        if not matched_players:
+            return PlayerLookupResult("not_found")
+        if len(matched_players) > 1:
+            return PlayerLookupResult("ambiguous", tuple(matched_players))
 
-        elif len(matched_players) > 1:
-            """ Handle the case where multiple players match the given name."""
-            idx = 0
-            for player in matched_players:
-                print(f"{idx}:  ", player["full_name"])
-                idx += 1
+        self.set_player_by_data(matched_players[0])
+        return PlayerLookupResult("found")
 
-            found = False
-            while(not found):
-                try:
-                    choice = int(input("Enter number of player you want to select: "))
-                    if 0 <= choice < len(matched_players):
-                        player_info = get_player_info(matched_players[choice])
-                        self.set_info(player_info)
-                        found = True
-                        break
-                    else:
-                        print("Invalid choice. Please enter a valid number.")
-                except ValueError:
-                    print("Invalid input. Please enter a number.")
-        else:
-            return 1
+
+    def set_player_by_data(self, player_data):
+        """Load this object from one candidate returned by a player lookup."""
+        player_info = get_player_info(player_data)
+        self.set_info(player_info)
 
 
     def set_info(self, player_info):
@@ -214,16 +209,12 @@ class Player:  # pylint: disable=too-many-instance-attributes
         if self.target:
             self.all_teams = self.set_all_teams()
 
-        if len(self.current_team.name) == 0:
-            self.set_random_player()
-        if len(self.jersey) == 0:
-            self.set_random_player()
-
-
     def set_random_player(self):
         """Load a random active player into this Player object."""
         player_info = initialize_player()
         self.set_info(player_info)
+        if self.current_team.abbreviation in ("TOT", "UNK"):
+            self.set_random_player()
 
 
     def set_target(self):

@@ -24,19 +24,31 @@ class Game:
         self.target.set_target()
 
     def guess(self, string):
-        """Process a player guess and return whether the entry was invalid."""
+        """Process a player guess and return its lookup result."""
         self.player = Player()
-        if self.player.set_player_by_name(string) == 1:
-            print("Player not found.")
-            return True
+        lookup = self.player.set_player_by_name(string)
+        if lookup.status != "found":
+            return lookup
 
         if self.player.name in self.guesses:
             print("Player already guessed.")
-            return True
+            return lookup
 
         self.guesses.append(self.player.name)
         self.process_guess()
-        return False
+        return lookup
+
+    def select_guess(self, candidate):
+        """Load and process a candidate selected by the caller."""
+        self.player = Player()
+        self.player.set_player_by_data(candidate)
+        if self.player.name in self.guesses:
+            print("Player already guessed.")
+            return False
+
+        self.guesses.append(self.player.name)
+        self.process_guess()
+        return True
 
     def process_guess(self):
         """Process the current guess and compare it to the target player."""
@@ -110,7 +122,22 @@ def main():
                 game.print_target()
                 continue
 
-            elif game.guess(guess_name):
+            lookup = game.guess(guess_name)
+            if lookup.status == "ambiguous":
+                for index, candidate in enumerate(lookup.candidates):
+                    print(f"{index}: {candidate['full_name']}")
+                while True:
+                    try:
+                        choice = int(input("Enter number of player you want to select: "))
+                        candidate = lookup.candidates[choice]
+                        break
+                    except (ValueError, IndexError):
+                        print("Invalid choice. Please enter a valid number.")
+                game.select_guess(candidate)
+                continue
+
+            if lookup.status == "not_found":
+                print("Player not found.")
                 print("Enter another player...")
                 continue
 
