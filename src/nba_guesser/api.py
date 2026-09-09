@@ -3,9 +3,6 @@ from nba_api.stats.endpoints import commonplayerinfo, playercareerstats, teaminf
 from requests.exceptions import RequestException
 import pandas as pd
 
-
-
-
 def get_player_id(player_dict):
     return player_dict["id"]
 
