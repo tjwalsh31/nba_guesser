@@ -1,7 +1,7 @@
 from enum import Enum
 from dataclasses import dataclass
 from typing import Optional
-from getplayer import Player
+from .players import Player
 
 class MatchStatus(Enum):
     MATCH = "✓"

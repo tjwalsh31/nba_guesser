@@ -5,7 +5,7 @@ from datetime import datetime
 from dataclasses import dataclass
 import numpy as np
 
-from nba_wrapper import NBAApiClient
+from .api import NBAApiClient
 
 api_client = NBAApiClient()
 
