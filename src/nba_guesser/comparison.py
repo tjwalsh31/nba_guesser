@@ -141,6 +141,7 @@ class PlayerComparison:
             "division": division.status.value,
             "player": player.status.value
         }
+        # print(results)
         return results
 
     def comp_for_game(self):

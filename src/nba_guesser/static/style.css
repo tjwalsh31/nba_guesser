@@ -1,0 +1,23 @@
+#game-form > div {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    margin: 20px 0;
+    gap: 10px;
+}
+#game-info {
+    display: inline-flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    background-color:rgba(27, 34, 136, 0.608);
+    color:white;
+    border-radius: 10px;
+    padding: 10px;
+}
+#game-info > p {
+    margin: 0.1rem;
+    display: inline-block;
+}
+

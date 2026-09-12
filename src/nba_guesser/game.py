@@ -11,14 +11,21 @@ class Game:
         self.target = None
         self.player = None
         self.comparison = {}
+        self.comparisons = []
 
     def start_game(self):
         """Start a new round and select a target player."""
         self.playing = True
         self.guesses = []
         self.num_guesses = 0
+        self.player = None
+        self.comparison = {}
+        self.comparisons = []
         self.target = Player()
         self.target.set_target()
+
+    def restart_game(self):
+        self.start_game()
 
     def guess(self, string):
         """Process a player guess and return its lookup result."""
@@ -60,6 +67,7 @@ class Game:
     def compare_guess(self):
         """Compare the player's guess against the target player."""
         comp = PlayerComparison(self.target, self.player)
+        self.comparisons.append(comp)
         self.comparison = comp.comp_for_game()
         # self.comparison = {
         #     "team": compare_teams(self.target, self.player),
@@ -72,7 +80,8 @@ class Game:
         #     "player": compare_player(self.target, self.player),
         # }
 
-        self.display_comparison()
+        print(self.comparison)
+        # self.display_comparison()
         # print(self.comparison)
         return self.comparison
 

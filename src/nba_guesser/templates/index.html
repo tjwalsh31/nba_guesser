@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <script src="{{ url_for('static', filename='script.js') }}" defer></script>
+    <title>Hoopdle</title>
+</head>
+<body>
+    <div id="header">
+        <h1>Hoopdle</h1>
+    </div>
+    <button id="start-game">Start game</button>
+    <form id="game-form" action="{{ url_for('process_guess') }}" method="POST">
+    <div>
+        <label for="player">Guess a player</label>
+        <input type="text" id="player" name="player" placeholder="Enter player name" required disabled>
+        <button type="submit" disabled>Submit</button>
+    </div>
+    </form>
+    <div id="game-info">
+        <h2>Game Info</h2>
+        <p>isPlaying: {{game.playing}}</p>
+        <p># of guesses: {{game.num_guesses}}</p>
+        <p>Player guessed: {{game.player}}</p>
+        <p>Comparison: {{game.comparison}}</p>
+    </div>
+    <div id="guess-history">
+        <h2>Guess History</h2>
+        <ul>
+            {% for guess in game.guesses %}
+                <li>{{ guess }}</li>
+            {% endfor %}
+        </ul>
+    </div>
+    <div id="comparisons">
+        <h2>Comparisons</h2>
+        <ul>
+            {% for comparison in game.comparisons %}
+                <li>{{ comparison }}</li>
+            {% endfor %}
+        </ul>
+    </div>
+    <div id="results">
+        <span id="result"></span>
+    </div>
+</body>

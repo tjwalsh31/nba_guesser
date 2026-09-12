@@ -1,16 +1,20 @@
-from flask import Flask
-from .comparison import PlayerComparison
+from flask import Flask, redirect, render_template, request, url_for, jsonify
 from .game import Game
-import os
 
 app = Flask(__name__)
+game = Game()
 
-@app.route("/")
+@app.get("/")
 def index():
-    return "NBA Guesser API is running!"
+    return render_template("index.html", game=game)
 
-
-@app.route('/api/start')
+@app.route("/start_game", methods=["POST"])
 def start_game():
-    game = Game()
     game.start_game()
+    return redirect(url_for("index"))
+
+@app.route("/process_guess", methods=["POST"])
+def process_guess():
+    player_name = request.form["player"]
+    game.guess(player_name)
+    return redirect(url_for("index"))
