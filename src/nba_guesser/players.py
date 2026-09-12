@@ -222,3 +222,18 @@ class Player:  # pylint: disable=too-many-instance-attributes
             Method will set a random player as the target."""
         self.target = True
         self.set_random_player()
+
+    def format_info(self):
+        """ Format player info to a dict that can be read through json and
+            used in the web app."""
+        self.player_dict = {
+            "name": self.name,
+            "age": self.age,
+            "position": self.position,
+            "height": self.height,
+            "team": self.current_team.abbreviation,
+            "division": self.current_team.division,
+            "conference": self.current_team.conference,
+            "jersey": self.jersey
+        }
+        return self.player_dict
