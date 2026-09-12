@@ -11,13 +11,42 @@
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    background-color:rgba(27, 34, 136, 0.608);
-    color:white;
     border-radius: 10px;
     padding: 10px;
+    margin: auto;
 }
 #game-info > p {
     margin: 0.1rem;
     display: inline-block;
 }
 
+table {
+    border-collapse: collapse;
+    border: 2px solid black;
+    font-size: 1.2rem;
+    letter-spacing: 1px;
+    margin: auto;
+    padding: auto;
+}
+
+thead {
+    background-color: antiquewhite;
+}
+
+th, td {
+    border: 1px solid black;
+    padding: 5px 10px;
+    text-align:center;
+}
+
+.match {
+    background-color: rgb(96, 226, 113)
+}
+
+.close-match {
+    background-color: rgb(247, 255, 87)
+}
+
+.no-match {
+    background-color: rgb(237, 73, 73)
+}
